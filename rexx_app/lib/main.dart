@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 void main() {
   runApp(const RexxApp());
@@ -20,11 +19,8 @@ class RexxApp extends StatelessWidget {
 }
 
 class ApiConfig {
-  // iOS 시뮬레이터면 이 주소로 됨
-  static const String baseUrl = 'https://rexxstrength-production.up.railway.app';
-
-  // Android 에뮬레이터면 이걸로 바꾸면 됨
-  // static const String baseUrl = 'http://10.0.2.2:8000';
+  static const String baseUrl =
+      'https://rexxstrength-production.up.railway.app';
 }
 
 class RexxHomeScreen extends StatefulWidget {
@@ -81,9 +77,9 @@ class _RexxHomeScreenState extends State<RexxHomeScreen> {
     if (result != null) {
       setState(() {
         isLoggedIn = true;
-        nickname = result['username'] ?? '사용자';
-        email = result['email'];
-        token = result['token'];
+        nickname = result['user']?['username'] ?? '사용자';
+        email = result['user']?['email'] ?? '';
+        token = result['token'] ?? '';
       });
 
       if (!mounted) return;
@@ -716,7 +712,8 @@ class _RexxHomeScreenState extends State<RexxHomeScreen> {
 }
 
 class AuthService {
-  static const String baseUrl = "https://rexxstrength-production.up.railway.app";
+  static const String baseUrl =
+      "https://rexxstrength-production.up.railway.app";
 
   Future<Map<String, dynamic>> login({
     required String email,
@@ -725,13 +722,18 @@ class AuthService {
     final response = await http.post(
       Uri.parse("$baseUrl/login"),
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"email": email, "password": password}),
+      body: jsonEncode({
+        "email": email.trim(),
+        "password": password.trim(),
+      }),
     );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception("로그인 실패");
+      throw Exception(
+        "status=${response.statusCode}, body=${response.body}",
+      );
     }
   }
 
@@ -744,16 +746,18 @@ class AuthService {
       Uri.parse("$baseUrl/register"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
-        "username": username,
-        "email": email,
-        "password": password,
+        "username": username.trim(),
+        "email": email.trim(),
+        "password": password.trim(),
       }),
     );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception("회원가입 실패");
+      throw Exception(
+        "status=${response.statusCode}, body=${response.body}",
+      );
     }
   }
 }
@@ -781,34 +785,53 @@ class _LoginPageState extends State<LoginPage> {
         password: passwordController.text,
       );
 
+      if (!mounted) return;
       Navigator.pop(context, result);
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("로그인 실패: $e")));
+    } finally {
+      if (mounted) {
+        setState(() => loading = false);
+      }
     }
-
-    setState(() => loading = false);
   }
 
   Future<void> register() async {
     setState(() => loading = true);
 
     try {
+      final email = emailController.text.trim();
+      final password = passwordController.text.trim();
+      final username = email.split('@').first;
+
       final result = await authService.register(
-        username: "현민",
-        email: emailController.text,
-        password: passwordController.text,
+        username: username,
+        email: email,
+        password: password,
       );
 
+      if (!mounted) return;
       Navigator.pop(context, result);
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("회원가입 실패: $e")));
+    } finally {
+      if (mounted) {
+        setState(() => loading = false);
+      }
     }
+  }
 
-    setState(() => loading = false);
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -836,12 +859,12 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 30),
             ElevatedButton(
               onPressed: loading ? null : login,
-              child: const Text("로그인"),
+              child: Text(loading ? "처리중..." : "로그인"),
             ),
             const SizedBox(height: 10),
             ElevatedButton(
               onPressed: loading ? null : register,
-              child: const Text("회원가입"),
+              child: Text(loading ? "처리중..." : "회원가입"),
             ),
           ],
         ),
@@ -881,4 +904,4 @@ class MemberPage extends StatelessWidget {
       ),
     );
   }
-}
+}  
