@@ -21,7 +21,7 @@ class RexxApp extends StatelessWidget {
 
 class ApiConfig {
   // iOS 시뮬레이터면 이 주소로 됨
-  static const String baseUrl = 'http://127.0.0.1:8000';
+  static const String baseUrl = 'https://rexxstrength-production.yp.railway.app';
 
   // Android 에뮬레이터면 이걸로 바꾸면 됨
   // static const String baseUrl = 'http://10.0.2.2:8000';
