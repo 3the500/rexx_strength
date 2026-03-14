@@ -716,7 +716,7 @@ class _RexxHomeScreenState extends State<RexxHomeScreen> {
 }
 
 class AuthService {
-  static const String baseUrl = "http://127.0.0.1:8000";
+  static const String baseUrl = "https://rexxstrength-production.up.railway.app";
 
   Future<Map<String, dynamic>> login({
     required String email,
